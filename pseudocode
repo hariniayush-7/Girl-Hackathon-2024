@@ -1,0 +1,69 @@
+module LatencyAndBandwidthMeasurement;
+
+
+typedef struct {
+    string type;      
+    string agent;     
+    int latency;      
+} MonitorOutput;
+
+
+parameter DATA_WIDTH_PER_TRANSFER = 32; 
+MonitorOutput read_monitor_output();
+int get_simulation_time();
+
+
+task MeasureLatencyAndBandwidth();
+    int total_latency_cpu = 0;
+    int total_latency_io = 0;
+    int total_transfers_cpu = 0;
+    int total_transfers_io = 0;
+    int simulation_time;
+    int total_transfers;
+    int total_bytes_transferred;
+    real bandwidth;
+
+    while (1) begin
+        MonitorOutput monitor_output = read_monitor_output();
+    
+        if (monitor_output.type == "") begin
+            $display("End of simulation");
+            break;
+        end
+        
+        
+        if (monitor_output.type == "Read") begin
+            if (monitor_output.agent == "CPU") begin
+                total_latency_cpu += monitor_output.latency;
+                total_transfers_cpu++;
+            end else if (monitor_output.agent == "IO") begin
+                total_latency_io += monitor_output.latency;
+                total_transfers_io++;
+            end
+        end else if (monitor_output.type == "Write") begin
+           
+            if (monitor_output.agent == "CPU") begin
+                total_transfers_cpu++;
+            end else if (monitor_output.agent == "IO") begin
+                total_transfers_io++;
+            end
+        end
+    end
+    
+    
+    real average_latency_cpu = total_latency_cpu / total_transfers_cpu;
+    real average_latency_io = total_latency_io / total_transfers_io;
+    
+  
+    total_transfers = total_transfers_cpu + total_transfers_io;
+    total_bytes_transferred = total_transfers * DATA_WIDTH_PER_TRANSFER;
+    simulation_time = get_simulation_time();
+    bandwidth = total_bytes_transferred / simulation_time;
+    
+  
+    $display("Average CPU Read Latency: %0d cycles", average_latency_cpu);
+    $display("Average IO Read Latency: %0d cycles", average_latency_io);
+    $display("Bandwidth: %0d bytes/sec", bandwidth);
+endtask
+
+endmodule
