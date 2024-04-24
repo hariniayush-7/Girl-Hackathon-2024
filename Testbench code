@@ -1,0 +1,34 @@
+module LatencyAndBandwidthTestbench;
+
+LatencyAndBandwidthMeasurement dut();
+logic clk;
+logic reset;
+always #5 clk = ~clk;
+
+initial begin
+    reset = 1;
+    #10 reset = 0;
+end
+
+initial begin
+    #100;
+    read_monitor_output(type, agent, latency);
+    #10;
+    write_monitor_output(type, agent, latency);
+    #50;
+    read_monitor_output(type, agent, latency);
+    #200;
+    $finish;
+end
+
+function automatic void read_monitor_output(output string type, output string agent, output int latency);
+    type = "Read";
+    agent = "CPU";
+    latency = 10;
+endfunction
+
+function automatic int get_simulation_time();
+    return $time;
+endfunction
+
+endmodule
